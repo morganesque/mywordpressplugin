@@ -64,12 +64,8 @@ class Twitter {
     {
         $tmp = $this->doTwitterSearch();        
         
-        // this is for if an error is returned (pass it into "results" anyway).
         if (!isset($tmp['results'])) $new['results'] = $tmp;
         else $new = $tmp;
-        
-        // this is for if absolutely nothing is returned (basically if JSON doesn't parse).
-        if (!$new['results']) $new['results'] = array('error' => 1);
         
         if (is_array($new['results']))
         {
@@ -96,16 +92,17 @@ class Twitter {
                     $text = preg_replace("#(^|[\n ])((www|ftp)\.[^ \"\t\n\r<]*)#ise", "'\\1<a href=\"http://\\2\" >\\2</a>'", $text);
                     $new['results'][$k]['text'] = $text;
                 }                
-                
-                /*
-                    If you've got here you've got data. So cache the results.
-                */
-                $h = fopen($this->cache_file,'w');
-                fwrite($h,serialize($new));
-                fclose($h);
-                return array('new',$new);                
             }
+
         }
+
+        /*
+            If you've got here you haven't errored. So cache the results.
+        */
+        $h = fopen($this->cache_file,'w');
+        fwrite($h,serialize($new));
+        fclose($h);
+        return array('new',$new);
     }
     
     private function doTwitterSearch()
