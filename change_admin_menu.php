@@ -1,16 +1,44 @@
 <?php
 
+add_action( 'admin_menu', 'change_post_menu_label' );
 function change_post_menu_label() 
 {
     global $menu;
     global $submenu;
+
     $menu[5][0] = 'Blog';
     $submenu['edit.php'][5][0] = 'Posts';
     $submenu['edit.php'][10][0] = 'Add Post';
+
+    $tmp = $menu[20]; unset($menu[20]); $menu[4] = $tmp;
+    $tmp = $menu[26]; unset($menu[26]); $menu[6] = $tmp;
+    $tmp = $menu[101]; unset($menu[101]); $menu[1] = $tmp;
+
+    $categories = array(
+        'Categories'
+        ,'manage_categories'
+        ,'edit-tags.php?taxonomy=category'
+        ,''
+        ,'open-if-no-js menu-top menu-icon-generic'
+        );
+
+    $menu[9] = $categories;
+
+    // PreDump($submenu);die;
     echo '';
 }
 
-add_action( 'admin_menu', 'change_post_menu_label' );
+add_action( 'admin_menu', 'my_remove_menu_pages' );
+function my_remove_menu_pages() 
+{
+    remove_menu_page('index.php');              // Dashboard
+    remove_menu_page('link-manager.php');       // Links
+    remove_menu_page('tools.php');              // Tools
+    remove_menu_page('edit-comments.php');      // Comments
+    remove_menu_page('themes.php');             // Appearance
+    remove_menu_page('plugins.php');             // Appearance
+    // remove_menu_page('edit.php');            // Posts
+}
 
 /*
 // Change the Posts to be called News.
