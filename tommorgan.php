@@ -36,6 +36,7 @@ include( TOM_PATH . 'change_admin_menu.php');
 include( TOM_PATH . 'meta-project_url.php');
 include( TOM_PATH . 'meta-all_projects.php');
 include( TOM_PATH . 'disable-adminbar.php');
+include( TOM_PATH . 'widgets.php');
 
 add_action( 'admin_menu', 'tommorgan_plugin_menu' );
 
