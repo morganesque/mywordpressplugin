@@ -8,8 +8,12 @@
     list($is_cache,$tweets) = $twitter->getTweets();
 */
 
+include_once('linkify_tweets.php');
+
 class Twitter {
     
+    private $token = 'XXX'; // add your own access token here http://ghijklmno.net/twitter-migration-to-v1-1-api/
+
     public $cache_file; 
     public $force;
     public $screenname;
@@ -21,7 +25,7 @@ class Twitter {
         $this->cache_file = TOM_PATH.$this->screenname.'-twitter-search.txt';        
     }
     
-    public function getTweets()
+    public function getTweets($force = false)
     {
         $data = $this->getParsedResults();
         $tweet = array();
@@ -63,7 +67,7 @@ class Twitter {
     
     private function getNewData()
     {
-        $tmp = $this->doTwitterSearch();        
+        $tmp = $this->doTwitterSearch();
         $new = array();
                 
         // this is for if an error is returned (pass it into "results" anyway).
@@ -75,7 +79,7 @@ class Twitter {
         
         if (is_array($new['results']))
         {
-            if ($new['results']['error'])
+            if (isset($new['results']['error']))
             {
                 /*
                     If there's an error return the cache if you can.
@@ -87,18 +91,25 @@ class Twitter {
                     return array('error',array());
                 }
             } else {
-                /*
-                    If you get results process them and return them.
-                */
-                foreach($new['results'] as $k=>$t)
-                {   
-                    $text = $t['text'];                 
-                    // $text = preg_replace("#(^|[\n ])@([^ \"\t\n\r<]*)#ise", "'\\1<a href=\"http://www.twitter.com/\\2\" >@\\2</a>'", $text);
-                    // $text = preg_replace("#(^|[\n ])([\w]+?://[\w]+[^ \"\n\r\t<]*)#ise", "'\\1<a href=\"\\2\" >\\2</a>'", $text);
-                    // $text = preg_replace("#(^|[\n ])((www|ftp)\.[^ \"\t\n\r<]*)#ise", "'\\1<a href=\"http://\\2\" >\\2</a>'", $text);
-                    $new['results'][$k]['text'] = $text;
-                }                
-                
+
+                foreach($new['results'] as $k=>$n)
+                {                   
+                    if (isset($n['retweeted_status']))
+                    {
+                        $text = $n['retweeted_status']['text'];
+                        $entities = $n['retweeted_status']['entities'];
+                        $retweet = $n['retweeted_status']['user']['screen_name'];
+                    } else {
+                        $text = $n['text'];
+                        $entities = $n['entities'];
+                        $retweet = '';
+                    }
+
+                    $output_text = TM_linkify($text,$entities,$retweet);
+
+                    $new['results'][$k]['rawtext'] = $n['text'];
+                    $new['results'][$k]['text'] = $output_text;
+                }
                 /*
                     If you've got here you've got data. So cache the results.
                 */
@@ -110,25 +121,56 @@ class Twitter {
 
         }
     }
-    
+
     private function doTwitterSearch()
     {
+        $data = json_decode('{"token_type":"bearer","access_token":"'.$this->token.'"}',true);
+
         $url = $this->getSearchURL();
+
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
-        $output = curl_exec($ch);        
+            $headers = array('Authorization: Bearer '.$data['access_token']);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'WandP');    
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+
+        $output = curl_exec($ch);  
+        $output = utf8_decode($output);
         return json_decode($output,true);
     }
     
     private function getSearchURL()
     {
-        return 'https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&screen_name='.$this->screenname.'&count=20';
+        $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json?count=20&screen_name='.$this->screenname;
+        return $url;
+        // return 'https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&screen_name='.$this->screenname.'&count=20';
     }
 }
 
-// $LSXTwit = new LSXTwitter();
 
+/*
+    This was here for a bit of testing I was doing to try and work out why the links weren't appearing properly in the tweets. It took fucking ages but I managed to work it out in the end thanks to this page: http://stackoverflow.com/questions/11533214/php-how-to-use-the-twitter-apis-data-to-convert-urls-mentions-and-hastags-in
+    
+define('TOM_PATH', '');
+?>
+<html>
+    <head>
+        <!-- <meta http-equiv="Content-Type" content="text/html charset=utf-8" /> -->
+    </head>
+<body>
+<?php
+$twitter = new Twitter('wreakevalleyac',true);
+list($is_cache,$tweets) = $twitter->getTweets();
+for($i=0; $i<20; $i++)
+{
+    $t = $tweets[$i];
+    echo '<p>'.$t['text'].'</p>'."\n";
+}
+?>
+</body>
+</html>
+<?
+/* */
 ?>
