@@ -16,9 +16,9 @@ class Twitter {
     
     public function __construct($name='morganesque',$force=false) 
     {
-        $this->force = 'true'; //$force;
-        $this->cache_file = TOM_PATH.'twitter-search.txt';
+        $this->force = $force;
         $this->screenname = $name;
+        $this->cache_file = TOM_PATH.$this->screenname.'-twitter-search.txt';        
     }
     
     public function getTweets()
@@ -93,9 +93,9 @@ class Twitter {
                 foreach($new['results'] as $k=>$t)
                 {   
                     $text = $t['text'];                 
-                    $text = preg_replace("#(^|[\n ])@([^ \"\t\n\r<]*)#ise", "'\\1<a href=\"http://www.twitter.com/\\2\" >@\\2</a>'", $text);
-                    $text = preg_replace("#(^|[\n ])([\w]+?://[\w]+[^ \"\n\r\t<]*)#ise", "'\\1<a href=\"\\2\" >\\2</a>'", $text);
-                    $text = preg_replace("#(^|[\n ])((www|ftp)\.[^ \"\t\n\r<]*)#ise", "'\\1<a href=\"http://\\2\" >\\2</a>'", $text);
+                    // $text = preg_replace("#(^|[\n ])@([^ \"\t\n\r<]*)#ise", "'\\1<a href=\"http://www.twitter.com/\\2\" >@\\2</a>'", $text);
+                    // $text = preg_replace("#(^|[\n ])([\w]+?://[\w]+[^ \"\n\r\t<]*)#ise", "'\\1<a href=\"\\2\" >\\2</a>'", $text);
+                    // $text = preg_replace("#(^|[\n ])((www|ftp)\.[^ \"\t\n\r<]*)#ise", "'\\1<a href=\"http://\\2\" >\\2</a>'", $text);
                     $new['results'][$k]['text'] = $text;
                 }                
                 
